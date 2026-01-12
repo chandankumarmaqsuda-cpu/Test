@@ -1,7 +1,21 @@
-navigator.vibrate  overflow:hidden;
-}
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>Good Bye Mumbai</title>
 
-/* VIDEO BG */
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI', Arial;
+  background:#000;
+  color:white;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+}
 .gif-bg{
   position:fixed;
   inset:0;
@@ -13,24 +27,20 @@ navigator.vibrate  overflow:hidden;
   height:100%;
   object-fit:cover;
 }
-
-/* CONTENT BOX */
 .box{
   position:fixed;
-  top:5px;
+  top:8px;
   left:50%;
   transform:translateX(-50%);
   background:rgba(0,0,0,.6);
-  padding:15px 19px;
-  border-radius:17px;
-  width:90%;
+  padding:16px 18px;
+  border-radius:18px;
+  width:92%;
   max-width:720px;
   text-align:center;
 }
-
 h1{font-size:28px;}
-#timer{margin:18px 0;font-size:20px;font-weight:bold;}
-
+#timer{margin:12px 0;font-size:18px;font-weight:bold;}
 button{
   padding:12px 26px;
   border:none;
@@ -40,6 +50,16 @@ button{
   font-size:18px;
   cursor:pointer;
 }
+#volumeSlider{
+  width:100%;
+  margin-top:10px;
+}
+#secretMsg{
+  display:none;
+  margin-top:14px;
+  font-size:18px;
+  color:#ffb74d;
+}
 
 /* FLOWER POT */
 .spark{
@@ -47,66 +67,44 @@ button{
   bottom:0;
   width:4px;
   height:18px;
-  background:linear-gradient(to top,#ff0,#fff);
-  opacity:0.9;
+  background:linear-gradient(to top,#ff9800,#fff);
   animation:sparkUp 3s ease-out forwards;
 }
-.left-pot{ left:6%; }
-.right-pot{ right:6%; }
-
+.left-pot{left:6%;}
+.right-pot{right:6%;}
 @keyframes sparkUp{
-  0%{transform:translateY(0);opacity:1;}
-  100%{transform:translateY(-70vh);opacity:0;}
+  to{transform:translateY(-70vh);opacity:0;}
 }
 </style>
 </head>
 
 <body>
 
-<!-- VIDEO BACKGROUND -->
 <div class="gif-bg">
   <video autoplay muted loop playsinline>
     <source src="ek-mulakat-jaruri-hai-sanam.mp4" type="video/mp4">
   </video>
 </div>
 
-<!-- CONTENT -->
 <div class="box">
   <h1 id="typing"></h1>
   <div id="timer">Loading...</div>
+
   <button id="playPauseBtn">▶️ Play</button>
+  <input id="volumeSlider" type="range" min="0" max="100" value="60">
+
+  <div id="secretMsg">💌 Mumbai sirf shehar nahi… ek jazba tha</div>
 </div>
 
-<div id="confetti-container"></div>
-
-<!-- AUDIO -->
 <audio id="music" loop>
   <source src="ghar-more-pardesiya.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-/* CONFETTI */
-function launchConfetti(){
-  const container=document.getElementById("confetti-container");
-  for(let i=0;i<25;i++){
-    const c=document.createElement("div");
-    c.className="confetti";
-    c.style.left=Math.random()*100+"vw";
-    const colors=["#ff0","#f00","#0f0","#0ff","#fff"];
-    c.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)];
-    c.style.animationDuration=(Math.random()*5+3)+"s";
-    container.appendChild(c);
-    setTimeout(()=>c.remove(),6000);
-  }
-}
-
 /* FLOWER POT */
 function createSpark(side){
   const s=document.createElement("div");
   s.className="spark "+side;
-  s.style.left=side==="left-pot"
-    ? (5+Math.random()*5)+"%"
-    : (90+Math.random()*5)+"%";
   document.body.appendChild(s);
   setTimeout(()=>s.remove(),3000);
 }
@@ -115,44 +113,105 @@ function startFlowerPot(){
   createSpark("right-pot");
 }
 
-/* MUSIC + EFFECTS */
+/* MUSIC */
 const music=document.getElementById("music");
 const btn=document.getElementById("playPauseBtn");
+const volumeSlider=document.getElementById("volumeSlider");
 
-let confettiInterval=null;
+music.volume=0.6;
+volumeSlider.value=60;
+
+volumeSlider.addEventListener("input",()=>{
+  music.volume=volumeSlider.value/100;
+});
+
 let potInterval=null;
+let fadeInterval=null;
 
-music.volume=0.05;
-
+/* FADE */
 function fadeInMusic(){
-  let v=music.volume;
-  const f=setInterval(()=>{
-    if(v<0.8){ v+=0.02; music.volume=v; }
-    else clearInterval(f);
-  },300);
+  clearInterval(fadeInterval);
+  fadeInterval=setInterval(()=>{
+    if(music.volume<volumeSlider.value/100){
+      music.volume+=0.02;
+    }else clearInterval(fadeInterval);
+  },250);
+}
+function fadeOutMusic(){
+  clearInterval(fadeInterval);
+  fadeInterval=setInterval(()=>{
+    if(music.volume>0.02){
+      music.volume-=0.02;
+    }else{
+      music.pause();
+      clearInterval(fadeInterval);
+    }
+  },200);
 }
 
+/* EFFECTS */
 function startEffects(){
-  launchConfetti();
-  confettiInterval=setInterval(launchConfetti,1200);
   startFlowerPot();
   potInterval=setInterval(startFlowerPot,800);
 }
-
 function stopEffects(){
-  clearInterval(confettiInterval);
   clearInterval(potInterval);
 }
 
-/* BUTTON TOGGLE */
+/* AUDIO ANALYSER + VIBRATION */
+let lastVibrate=0;
+let beatCount=0;
+let secretUnlocked=false;
+let headphonesConnected=false;
+
+if(navigator.mediaDevices?.enumerateDevices){
+  navigator.mediaDevices.enumerateDevices().then(d=>{
+    headphonesConnected=d.some(x=>x.kind==="audiooutput" && x.label.toLowerCase().includes("head"));
+  });
+}
+
+const AudioContext=window.AudioContext||window.webkitAudioContext;
+const audioCtx=new AudioContext();
+const source=audioCtx.createMediaElementSource(music);
+const analyser=audioCtx.createAnalyser();
+source.connect(analyser);
+analyser.connect(audioCtx.destination);
+analyser.fftSize=64;
+const dataArray=new Uint8Array(analyser.frequencyBinCount);
+
+function audioSyncEffects(){
+  analyser.getByteFrequencyData(dataArray);
+  const avg=dataArray.reduce((a,b)=>a+b)/dataArray.length;
+  const now=Date.now();
+
+  if(avg>120){
+    beatCount++;
+
+    if(!headphonesConnected && navigator.vibrate && now-lastVibrate>300){
+      navigator.vibrate(60);
+      lastVibrate=now;
+    }
+
+    if(beatCount>=5 && !secretUnlocked){
+      document.getElementById("secretMsg").style.display="block";
+      secretUnlocked=true;
+      navigator.vibrate?.([200,50,200]);
+    }
+  }
+  requestAnimationFrame(audioSyncEffects);
+}
+
+/* BUTTON */
 btn.addEventListener("click",()=>{
   if(music.paused){
+    audioCtx.resume();
     music.play();
     fadeInMusic();
     startEffects();
+    audioSyncEffects();
     btn.innerHTML="⏸ Pause";
   }else{
-    music.pause();
+    fadeOutMusic();
     stopEffects();
     btn.innerHTML="▶️ Play";
   }
@@ -172,19 +231,17 @@ const typingEl=document.getElementById("typing");
 /* TIMER */
 const targetDate=new Date("February 22, 2026 00:00:00").getTime();
 const timerEl=document.getElementById("timer");
-
 setInterval(()=>{
   const diff=targetDate-Date.now();
   if(diff<=0){
     timerEl.innerHTML="🌆 अब मुंबई को अलविदा कहने का समय…";
     return;
   }
-  const d=Math.floor(diff/(1000*60*60*24));
-  const h=Math.floor((diff/(1000*60*60))%24);
-  const m=Math.floor((diff/(1000*60))%60);
-  const s=Math.floor((diff/1000)%60);
-  timerEl.innerHTML=
-    `${d} दिन : ${h} घंटे : ${m} मिनट : ${s} सेकंड`;
+  const d=Math.floor(diff/864e5);
+  const h=Math.floor(diff/36e5)%24;
+  const m=Math.floor(diff/6e4)%60;
+  const s=Math.floor(diff/1000)%60;
+  timerEl.innerHTML=`${d} दिन : ${h} घंटे : ${m} मिनट : ${s} सेकंड`;
 },1000);
 </script>
 
