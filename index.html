@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>Good Bye Mumbai</title>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI', Arial;
+  background:#000;
+  color:white;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+}
+
+/* GIF Background */
+.gif-bg{
+  position:fixed;
+  inset:0;
+  background:url("your.gif") center/cover no-repeat;
+  opacity:0.6;
+  z-index:-1;
+}
+
+/* Main Box */
+.box{
+  background:rgba(0,0,0,.6);
+  padding:35px 25px;
+  border-radius:22px;
+  width:90%;
+  max-width:430px;
+  text-align:center;
+}
+
+h1{font-size:28px;}
+#timer{margin:18px 0;font-size:24px;font-weight:bold;}
+
+button{
+  padding:10px 24px;
+  border:none;
+  border-radius:30px;
+  background:#ff9800;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="gif-bg"></div>
+
+<div class="box">
+  <h1 id="typing"></h1>
+  <div id="timer">Loading...</div>
+  <button onclick="enableAudio()">Play</button>
+</div>
+
+<audio id="music">
+  <source src="ghar-more-pardesiya.mp3" type="audio/mpeg">
+</audio><script>
+/* Typing */
+const text = "💔 अलविदा मुंबई";
+let i = 0;
+const typingEl = document.getElementById("typing");
+
+function typing(){
+  if(i < text.length){
+    typingEl.innerHTML += text.charAt(i);
+    i++;
+    setTimeout(typing, 120);
+  }
+}
+typing();
+
+/* Audio */
+const music = document.getElementById("music");
+let audioAllowed = false;
+
+function enableAudio(){
+  music.play().then(() => {
+    music.pause();           // permission mil gayi
+    music.currentTime = 0;
+    audioAllowed = true;
+    alert("Music enabled 🎧");
+  }).catch(() => {
+    alert("Please tap once again");
+  });
+}
+
+/* Timer */
+const targetDate = new Date("February 22, 2026 00:00:00").getTime();
+const timerEl = document.getElementById("timer");
+
+setInterval(() => {
+  const now = new Date().getTime();
+  const diff = targetDate - now;
+
+  if(diff <= 0){
+    timerEl.innerHTML = "🌆 अब मुंबई को अलविदा कहने का समय…";
+    if(audioAllowed){
+      music.play();   // ✅ ab play hoga
+    }
+    return;
+  }
+
+  const d = Math.floor(diff / (1000*60*60*24));
+  const h = Math.floor((diff / (1000*60*60)) % 24);
+  const m = Math.floor((diff / (1000*60)) % 60);
+  const s = Math.floor((diff / 1000) % 60);
+
+  timerEl.innerHTML =
+    `${d} दिन : ${h} घंटे : ${m} मिनट : ${s} सेकंड`;
+}, 1000);
+</script>
+
+
+
+</body>
+</html>
