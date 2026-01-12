@@ -76,20 +76,61 @@ function typing(){
 }
 typing();
 
-/* Audio */
-const music = document.getElementById("music");
-let audioAllowed = false;
 
-function enableAudio(){
-  music.play().then(() => {
-    music.pause();           // permission mil gayi
-    music.currentTime = 0;
-    audioAllowed = true;
-    alert("Music enabled 🎧");
-  }).catch(() => {
-    alert("Please tap once again");
-  });
+<script>
+const music = document.getElementById("music");
+let started = false;
+let muted = false;
+
+/* Initial very low volume */
+music.volume = 0.05;
+
+/* Fade-in function */
+function fadeInMusic(){
+  let vol = music.volume;
+  const fade = setInterval(() => {
+    if (vol < 0.8) {
+      vol += 0.02;
+      music.volume = Math.min(vol, 0.8);
+    } else {
+      clearInterval(fade);
+    }
+  }, 300);
 }
+
+/* Start music safely */
+function startMusic(){
+  if(!started){
+    music.play().then(() => {
+      started = true;
+      fadeInMusic();
+    }).catch(()=>{});
+  }
+}
+
+/* OPTION 1: First tap / click */
+document.addEventListener("click", startMusic, { once:true });
+
+/* OPTION 2: First scroll */
+window.addEventListener("scroll", startMusic, { once:true });
+
+/* OPTION 3: Double tap = mute / unmute */
+let lastTap = 0;
+document.addEventListener("click", () => {
+  const now = Date.now();
+  if (now - lastTap < 300) {
+    muted = !muted;
+    music.muted = muted;
+  }
+  lastTap = now;
+});
+
+/* OPTION 4: Auto pause when app/tab hidden */
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    music.pause();
+  } else if (started && !muted) {
+    music.play();
 
 /* Timer */
 const targetDate = new Date("February 22, 2026 00:00:00").getTime();
