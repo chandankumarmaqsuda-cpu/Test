@@ -43,7 +43,6 @@ body{
   inset:0;
   opacity:0.6;
   z-index:-1;
-  overflow:hidden;
 }
 .gif-bg video{
   width:100%;
@@ -51,26 +50,30 @@ body{
   object-fit:cover;
 }
 
-/* CONTENT BOX */.box{
+/* CONTENT BOX */
+.box{
   position:fixed;
-  top:10px;              /* 👈 TOP se distance */
+  top:5px;
   left:50%;
-  transform:translateX(-180%);
+  transform:translateX(-50%);
   background:rgba(0,0,0,.6);
-  padding:25px 20px;
-  border-radius:22px;
+  padding:15px 19px;
+  border-radius:17px;
   width:90%;
-  max-width:80px;
+  max-width:720px;
   text-align:center;
 }
+
 h1{font-size:28px;}
-#timer{margin:18px 0;font-size:24px;font-weight:bold;}
+#timer{margin:18px 0;font-size:20px;font-weight:bold;}
+
 button{
-  padding:10px 24px;
+  padding:12px 26px;
   border:none;
   border-radius:30px;
   background:#ff9800;
   font-weight:bold;
+  font-size:18px;
   cursor:pointer;
 }
 
@@ -107,7 +110,7 @@ button{
 <div class="box">
   <h1 id="typing"></h1>
   <div id="timer">Loading...</div>
-  <button onclick="startMusic()">▶ Play</button>
+  <button id="playPauseBtn">▶️ Play</button>
 </div>
 
 <div id="confetti-container"></div>
@@ -133,9 +136,25 @@ function launchConfetti(){
   }
 }
 
+/* FLOWER POT */
+function createSpark(side){
+  const s=document.createElement("div");
+  s.className="spark "+side;
+  s.style.left=side==="left-pot"
+    ? (5+Math.random()*5)+"%"
+    : (90+Math.random()*5)+"%";
+  document.body.appendChild(s);
+  setTimeout(()=>s.remove(),3000);
+}
+function startFlowerPot(){
+  createSpark("left-pot");
+  createSpark("right-pot");
+}
+
 /* MUSIC + EFFECTS */
 const music=document.getElementById("music");
-let started=false;
+const btn=document.getElementById("playPauseBtn");
+
 let confettiInterval=null;
 let potInterval=null;
 
@@ -149,42 +168,34 @@ function fadeInMusic(){
   },300);
 }
 
-function startMusic(){
-  if(started) return;
-  music.play().then(()=>{
-    started=true;
+function startEffects(){
+  launchConfetti();
+  confettiInterval=setInterval(launchConfetti,1200);
+  startFlowerPot();
+  potInterval=setInterval(startFlowerPot,800);
+}
+
+function stopEffects(){
+  clearInterval(confettiInterval);
+  clearInterval(potInterval);
+}
+
+/* BUTTON TOGGLE */
+btn.addEventListener("click",()=>{
+  if(music.paused){
+    music.play();
     fadeInMusic();
-
-    launchConfetti();
-    confettiInterval=setInterval(launchConfetti,1200);
-
-    startFlowerPot();
-    potInterval=setInterval(startFlowerPot,800);
-  });
-}
-
-/* First interaction fallback */
-document.addEventListener("click",startMusic,{once:true});
-
-/* FLOWER POT */
-function startFlowerPot(){
-  for(let i=0;i<10;i++){
-    createSpark("left-pot");
-    createSpark("right-pot");
+    startEffects();
+    btn.innerHTML="⏸ Pause";
+  }else{
+    music.pause();
+    stopEffects();
+    btn.innerHTML="▶️ Play";
   }
-}
-function createSpark(side){
-  const s=document.createElement("div");
-  s.className="spark "+side;
-  s.style.left=side==="left-pot"
-    ? (5+Math.random()*5)+"%"
-    : (90+Math.random()*5)+"%";
-  document.body.appendChild(s);
-  setTimeout(()=>s.remove(),3000);
-}
+});
 
 /* TYPING */
-const text="💔 अलविदा मुंबई";
+const text="💔अलविदा मुंबई💔";
 let i=0;
 const typingEl=document.getElementById("typing");
 (function typing(){
@@ -208,7 +219,8 @@ setInterval(()=>{
   const h=Math.floor((diff/(1000*60*60))%24);
   const m=Math.floor((diff/(1000*60))%60);
   const s=Math.floor((diff/1000)%60);
-  timerEl.innerHTML=`${d} दिन : ${h} घंटे : ${m} मिनट : ${s} सेकंड`;
+  timerEl.innerHTML=
+    `${d} दिन : ${h} घंटे : ${m} मिनट : ${s} सेकंड`;
 },1000);
 </script>
 
