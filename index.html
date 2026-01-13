@@ -2,116 +2,87 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Good Bye Maharastra</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Good Bye Mumbai – Mid Vibration</title>
 
 <style>
-body{
-  margin:0;
-  font-family:'Segoe UI', Arial;
-  background:#000;
-  color:white;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  overflow:hidden;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#000;color:#fff;height:100vh;overflow:hidden}
 
-/* BACKGROUND VIDEO */
-.gif-bg{
-  position:fixed;
-  inset:0;
-  opacity:0.55;
-  z-index:-3;
-}
-.gif-bg video{
-  width:100%;
-  height:100%;
+/* VIDEO BG */
+#bg{
+  position:fixed;inset:0;
+  width:100%;height:100%;
   object-fit:cover;
+  opacity:.6;z-index:-5;
 }
 
 /* NEON */
 .neon{
-  position:fixed;
-  top:0;
-  width:14px;
-  height:100vh;
-  filter:blur(8px);
-  opacity:.25;
-  transition:.15s;
+  position:fixed;top:0;
+  width:8px;height:100%;
+  filter:blur(6px);
+  z-index:10;
 }
-.neon.left{left:0;}
-.neon.right{right:0;}
+.left{left:0}
+.right{right:0}
+
+/* BORDER */
+.border{
+  position:fixed;inset:0;
+  border:3px solid transparent;
+  pointer-events:none;
+  z-index:9;
+}
 
 /* BOX */
 .box{
   position:fixed;
-  top:8px;
-  left:50%;
+  top:8px;left:50%;
   transform:translateX(-50%);
+  width:94%;max-width:720px;
   background:rgba(0,0,0,.6);
-  padding:16px 18px;
   border-radius:18px;
-  width:92%;
-  max-width:720px;
+  padding:16px;
   text-align:center;
-}
-h1{font-size:28px;}
-#timer{margin:12px 0;font-size:18px;font-weight:bold;}
-button{
-  padding:12px 26px;
-  border:none;
-  border-radius:30px;
-  background:#ff9800;
-  font-weight:bold;
-  font-size:18px;
-  cursor:pointer;
-}
-#volumeSlider{width:100%;margin-top:10px;}
-#secretMsg{
-  display:none;
-  margin-top:10px;
-  color:#ffb74d;
+  z-index:20;
 }
 
-/* ANAR (FOUNTAIN) */
-.particle{
-  position:fixed;
-  bottom:0;
-  width:4px;
-  height:4px;
-  border-radius:50%;
-  background:gold;
-  animation:shoot 2.5s linear forwards;
+h1{font-size:28px}
+#timer{margin:8px 0;font-size:16px}
+
+button{
+  padding:12px 30px;
+  border:none;border-radius:30px;
+  background:#ff9800;
+  font-size:18px;font-weight:bold;
+  cursor:pointer;
 }
-@keyframes shoot{
-  to{
-    transform:translate(var(--x),-70vh);
-    opacity:0;
-  }
+
+#secret{
+  display:none;
+  margin-top:12px;
+  color:#ffb74d;
+  font-size:18px;
 }
 </style>
 </head>
 
 <body>
 
+<video id="bg" autoplay muted loop playsinline>
+  <source src="ek-mulakat-jaruri-hai-sanam.mp4">
+</video>
+
 <div class="neon left"></div>
 <div class="neon right"></div>
-
-<div class="gif-bg">
-  <video autoplay muted loop playsinline>
-    <source src="ek-mulakat-jaruri-hai-sanam.mp4">
-  </video>
-</div>
+<div class="border"></div>
 
 <div class="box">
-  <h1 id="typing"></h1>
-  <div id="timer">Loading...</div>
-
-  <button id="playBtn">▶️ Play</button>
-  <input id="volumeSlider" type="range" min="0" max="100" value="60">
-
-  <div id="secretMsg">💌 Maharastra sirf shehar nahi… ek jazba tha</div>
+  <h1 id="title"></h1>
+  <div id="timer"></div>
+  <button id="btn">▶️ Play</button>
+  <div id="secret">💌 Mumbai sirf shehar nahi… ek jazba tha</div>
 </div>
 
 <audio id="music" loop>
@@ -119,115 +90,108 @@ button{
 </audio>
 
 <script>
-/* MUSIC */
-const music=document.getElementById("music");
-const btn=document.getElementById("playBtn");
-const slider=document.getElementById("volumeSlider");
-music.volume=.6;
-slider.oninput=()=>music.volume=slider.value/100;
-
-/* AUDIO ANALYSER */
-const AudioContext=window.AudioContext||window.webkitAudioContext;
-const audioCtx=new AudioContext();
-const source=audioCtx.createMediaElementSource(music);
-const analyser=audioCtx.createAnalyser();
-source.connect(analyser);
-analyser.connect(audioCtx.destination);
-analyser.fftSize=128;
-const data=new Uint8Array(analyser.frequencyBinCount);
-
-const neonL=document.querySelector(".neon.left");
-const neonR=document.querySelector(".neon.right");
-
-let smoothBass=0;
-let hue=0;
-let beat=0;
-let unlocked=false;
-
-/* ANAR */
-function anar(){
-  for(let i=0;i<6;i++){
-    const p=document.createElement("div");
-    p.className="particle";
-    p.style.left=Math.random()<.5?"6%":"94%";
-    p.style.setProperty("--x",`${(Math.random()*120-60)}px`);
-    document.body.appendChild(p);
-    setTimeout(()=>p.remove(),2500);
-  }
-}
-let anarInterval=null;
-
-/* SYNC */
-function sync(){
-  analyser.getByteFrequencyData(data);
-
-  const bass=(data[2]+data[3]+data[4])/3;
-  smoothBass+= (bass-smoothBass)*0.15;
-
-  hue=(hue+1)%360;
-  const color=`hsl(${hue},100%,60%)`;
-
-  neonL.style.background=color;
-  neonR.style.background=color;
-
-  const glow=Math.min(1,smoothBass/140);
-  neonL.style.opacity=.2+glow;
-  neonR.style.opacity=.2+glow;
-  neonL.style.boxShadow=`0 0 ${20+smoothBass}px ${color}`;
-  neonR.style.boxShadow=`0 0 ${20+smoothBass}px ${color}`;
-
-  if(smoothBass>120){
-    beat++;
-    if(beat%2===0) anar();
-    if(beat>=6 && !unlocked){
-      secretMsg.style.display="block";
-      unlocked=true;
-    }
-  }
-  requestAnimationFrame(sync);
-}
-
-/* BUTTON (FIXED PAUSE) */
-let playing=false;
-btn.onclick=()=>{
-  if(!playing){
-    audioCtx.resume();
-    music.play();
-    sync();
-    btn.innerHTML="⏸ Pause";
-    playing=true;
-  }else{
-    music.pause();        // ❌ no reset
-    btn.innerHTML="▶️ Play";
-    playing=false;
-  }
-};
-
-/* TYPING */
-const text="💔Good Bye Maharastra💔";
-let i=0;
-const typingEl=document.getElementById("typing");
+/* TEXT */
+const text="💔 अलविदा मुंबई 💔";
+let ti=0;
 (function type(){
-  if(i<text.length){
-    typingEl.innerHTML+=text[i++];
+  if(ti<text.length){
+    title.innerHTML+=text[ti++];
     setTimeout(type,120);
   }
 })();
 
 /* TIMER */
-const target=new Date("January 17, 2026 00:00:00").getTime();
+const target=new Date("Feb 22 2026").getTime();
 setInterval(()=>{
-  const diff=target-Date.now();
-  if(diff<=0){
-    timer.innerHTML="🌆Ab fir Kabhi Milenge";
-    return;
-  }
-  const d=Math.floor(diff/864e5);
-  const h=Math.floor(diff/36e5)%24;
-  const m=Math.floor(diff/6e4)%60;
-  const s=Math.floor(diff/1000)%60;
-  timer.innerHTML=`${d} दिन : ${h} घंटे : ${m} मिनट : ${s} सेकंड`;
+  const d=target-Date.now();
+  if(d<=0){timer.innerHTML="🌆 अब अलविदा…";return;}
+  timer.innerHTML=
+    Math.floor(d/864e5)+" दिन "+
+    Math.floor(d/36e5)%24+" घंटे "+
+    Math.floor(d/6e4)%60+" मिनट "+
+    Math.floor(d/1000)%60+" सेकंड";
 },1000);
+
+/* AUDIO */
+const music=document.getElementById("music");
+const ctx=new (window.AudioContext||webkitAudioContext)();
+const src=ctx.createMediaElementSource(music);
+const analyser=ctx.createAnalyser();
+src.connect(analyser);
+analyser.connect(ctx.destination);
+analyser.fftSize=64;
+const arr=new Uint8Array(analyser.frequencyBinCount);
+
+const neonL=document.querySelector(".left");
+const neonR=document.querySelector(".right");
+const border=document.querySelector(".border");
+
+let lastV=0,beats=0,unlock=false;
+
+/* MID VIBRATION FUNCTION */
+function midVibrate(power){
+  if(!navigator.vibrate) return;
+  const now=Date.now();
+  if(now-lastV<300) return;
+
+  if(power>160){
+    navigator.vibrate([40,30,40]);   // bass – medium strong
+  }else if(power>120){
+    navigator.vibrate(25);           // normal beat
+  }
+  lastV=now;
+}
+
+/* VISUAL LOOP (30 FPS) */
+function visual(){
+  analyser.getByteFrequencyData(arr);
+
+  let sum=0;
+  for(let i=0;i<arr.length;i++) sum+=arr[i];
+  const avg=sum/arr.length;
+
+  const power=Math.min(avg*1.1,180);
+  const hue=(Date.now()/18)%360;
+  const color=`hsl(${hue},100%,60%)`;
+
+  neonL.style.background=color;
+  neonR.style.background=color;
+  neonL.style.boxShadow=`0 0 ${power}px ${color}`;
+  neonR.style.boxShadow=`0 0 ${power}px ${color}`;
+
+  border.style.borderColor=color;
+  border.style.boxShadow=`0 0 ${power/1.5}px ${color}`;
+
+  /* MID VIBRATION */
+  midVibrate(power);
+
+  if(power>150){
+    beats++;
+  }
+
+  if(beats>8 && !unlock){
+    secret.style.display="block";
+    unlock=true;
+    navigator.vibrate([60,40,60]);
+  }
+
+  setTimeout(visual,33);
+}
+
+/* BUTTON */
+btn.onclick=()=>{
+  if(music.paused){
+    ctx.resume();
+    music.play();
+    navigator.vibrate(40); // play confirm
+    visual();
+    btn.innerHTML="⏸ Pause";
+  }else{
+    music.pause();
+    navigator.vibrate(20);
+    btn.innerHTML="▶️ Play";
+  }
+};
 </script>
 
 </body>
