@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Good Bye Mumbai – Smooth Neon</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#000;color:#fff;height:100vh;overflow:hidden}
+
+/* VIDEO BG */
+#bg{
+  position:fixed;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  opacity:.6;z-index:-5;
+}
+
+/* THUMB */
+#thumb{
+  position:fixed;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;z-index:-4;
+}
+
+/* SIDE NEON */
+.neon{
+  position:fixed;top:0;
+  width:6px;height:100%;
+  filter:blur(5px);z-index:10;
+}
+.left{left:0}
+.right{right:0}
+
+/* BORDER */
+.border{
+  position:fixed;inset:0;
+  border:2px solid transparent;
+  pointer-events:none;z-index:9;
+}
+
+/* BOX */
+.box{
+  position:fixed;
+  top:8px;left:50%;
+  transform:translateX(-50%);
+  width:94%;max-width:720px;
+  background:rgba(0,0,0,.6);
+  border-radius:18px;
+  padding:14px;
+  text-align:center;
+  z-index:20;
+}
+
+h2{font-size:24px}
+#timer{margin:6px 0;font-size:15px}
+
+.controls{
+  display:flex;flex-wrap:wrap;
+  gap:8px;justify-content:center;
+  margin-top:8px;
+}
+
+button,input[type=range]{
+  padding:10px 16px;
+  border:none;border-radius:30px;
+  background:#ff9800;
+  font-weight:bold;cursor:pointer;
+}
+input[type=range]{width:120px}
+
+/* FLOATING SOCIAL BAR */
+.social{
+  position:fixed;
+  bottom:18px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:20px;
+  z-index:30;
+}
+
+.social a{
+  width:52px;height:52px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:24px;
+  position:relative;
+  text-decoration:none;
+  background:rgba(255,255,255,.08);
+}
+
+/* ROTATING NEON (CONSTANT SPEED) */
+.social a::before{
+  content:"";
+  position:absolute;
+  inset:-6px;
+  border-radius:50%;
+  filter:blur(7px);
+  animation:spin 3.5s linear infinite;
+  z-index:-1;
+}
+
+/* COLORS */
+.fb::before{
+  background:conic-gradient(transparent,#2196f3,#00e5ff,transparent);
+}
+.insta::before{
+  background:conic-gradient(transparent,#ff00ff,#ff9800,transparent);
+}
+.wa::before{
+  background:conic-gradient(transparent,#00ff6a,#00c853,transparent);
+}
+
+/* TAP BLAST */
+.social a:active{
+  transform:scale(1.25);
+  box-shadow:0 0 40px currentColor,0 0 80px currentColor;
+}
+
+@keyframes spin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+
+#secret{
+  display:none;
+  margin-top:10px;
+  color:#ffb74d;
+}
+</style>
+</head>
+
+<body>
+
+<video id="bg" muted loop playsinline preload="metadata">
+  <source src="ek-mulakat-jaruri-hai-sanam.mp4">
+</video>
+
+<img id="thumb">
+
+<div class="neon left"></div>
+<div class="neon right"></div>
+<div class="border"></div>
+
+<div class="box">
+  <h2 id="title"></h2>
+  <div id="timer"></div>
+
+  <div class="controls">
+    <button id="btn">▶️ Play</button>
+    <button id="record">⬇️ Download</button>
+    <button onclick="location.reload()">🔁 Restart</button>
+  </div>
+
+  <div class="controls">
+    <input type="range" id="vol" min="0" max="1" step="0.01" value="1">
+  </div>
+
+  <div id="secret">💌 Mumbai sirf shehar nahi… ek jazba tha</div>
+</div>
+
+<!-- SOCIAL ICONS -->
+<div class="social">
+  <a class="fb" href="https://www.facebook.com/share/1CeKa1Ksn9/" target="_blank">
+    <i class="fab fa-facebook-f"></i>
+  </a>
+  <a class="insta" href="https://www.instagram.com/chandan123_official?igsh=bjd5amo4aTE3emc=" target="_blank">
+    <i class="fab fa-instagram"></i>
+  </a>
+  <a class="wa" href="https://wa.me/917273922192" target="_blank">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+</div>
+
+<audio id="music" loop>
+  <source src="ghar-more-pardesiya.mp3">
+</audio>
+
+<script>
+/* THUMBNAIL */
+const video=document.getElementById("bg");
+const thumb=document.getElementById("thumb");
+
+video.addEventListener("loadedmetadata",()=>{
+  video.currentTime=Math.min(2,video.duration-0.1);
+});
+video.addEventListener("seeked",()=>{
+  const c=document.createElement("canvas");
+  c.width=video.videoWidth;
+  c.height=video.videoHeight;
+  c.getContext("2d").drawImage(video,0,0);
+  thumb.src=c.toDataURL("image/jpeg",.85);
+});
+
+/* TYPE TEXT */
+const text="💔 अलविदा मुंबई 💔";
+let i=0;
+(function t(){
+  if(i<text.length){
+    title.innerHTML+=text[i++];
+    setTimeout(t,120);
+  }
+})();
+
+/* TIMER */
+const target=new Date("Feb 22 2026").getTime();
+setInterval(()=>{
+  const d=target-Date.now();
+  timer.innerHTML=d<=0?"🌆 अब अलविदा…":
+  Math.floor(d/864e5)+" दिन "+
+  Math.floor(d/36e5)%24+" घंटे "+
+  Math.floor(d/6e4)%60+" मिनट "+
+  Math.floor(d/1000)%60+" सेकंड";
+},1000);
+
+/* AUDIO + NEON */
+const music=document.getElementById("music");
+vol.oninput=()=>music.volume=vol.value;
+
+const ctx=new(AudioContext||webkitAudioContext)();
+const src=ctx.createMediaElementSource(music);
+const analyser=ctx.createAnalyser();
+src.connect(analyser);
+analyser.connect(ctx.destination);
+analyser.fftSize=64;
+const data=new Uint8Array(analyser.frequencyBinCount);
+
+const neonL=document.querySelector(".left");
+const neonR=document.querySelector(".right");
+const border=document.querySelector(".border");
+
+let running=false,lastV=0,beats=0,unlock=false,lastShadow=0;
+
+/* MID VIBRATION */
+function midVibrate(p){
+  if(!navigator.vibrate)return;
+  if(p>95 && Date.now()-lastV>350){
+    navigator.vibrate(20);
+    lastV=Date.now();
+  }
+}
+
+/* VISUAL LOOP */
+function visual(){
+  if(!running)return;
+
+  analyser.getByteFrequencyData(data);
+  let avg=data.reduce((a,b)=>a+b)/data.length;
+  const power=Math.min(avg*1.1,110);
+
+  const hue=(Date.now()/35)%360;
+  const color=`hsl(${hue},100%,60%)`;
+
+  neonL.style.background=color;
+  neonR.style.background=color;
+
+  if(Date.now()-lastShadow>120){
+    neonL.style.boxShadow=`0 0 ${power}px ${color}`;
+    neonR.style.boxShadow=`0 0 ${power}px ${color}`;
+    border.style.borderColor=color;
+    border.style.boxShadow=`0 0 ${power/1.4}px ${color}`;
+    lastShadow=Date.now();
+  }
+
+  midVibrate(power);
+
+  if(power>95)beats++;
+  if(beats>8&&!unlock){
+    secret.style.display="block";
+    navigator.vibrate([60,20,60]);
+    unlock=true;
+  }
+  setTimeout(visual,33);
+}
+
+/* PLAY */
+btn.onclick=()=>{
+  if(!running){
+    ctx.resume();
+    music.play();
+    video.play();
+    thumb.style.display="none";
+    running=true;
+    visual();
+    btn.innerText="⏸ Pause";
+  }else{
+    music.pause();
+    video.pause();
+    running=false;
+    btn.innerText="▶️ Play";
+  }
+};
+</script>
+</body>
+</html>
